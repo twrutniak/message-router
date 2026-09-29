@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
-import httpx
+from openai import AsyncOpenAI
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.models import Model
@@ -34,19 +34,21 @@ class RouterDeps:
     subject: str | None = None
 
 
-def build_model() -> Model:
-    http_client = httpx.AsyncClient(timeout=settings.ollama_timeout)
-    provider = OpenAIProvider(
+def build_llm_client() -> AsyncOpenAI:
+    return AsyncOpenAI(
         base_url=settings.ollama_base_url,
         api_key=settings.ollama_api_key,
-        http_client=http_client,
+        timeout=settings.ollama_timeout,
     )
-    return OpenAIChatModel(settings.ollama_model, provider=provider)
 
 
-def build_agent(model: Model | None = None) -> Agent[RouterDeps, str]:
+def build_model(client: AsyncOpenAI) -> Model:
+    return OpenAIChatModel(settings.ollama_model, provider=OpenAIProvider(openai_client=client))
+
+
+def build_agent(model: Model) -> Agent[RouterDeps, str]:
     agent = Agent(
-        model or build_model(),
+        model,
         deps_type=RouterDeps,
         output_type=str,
         system_prompt=build_system_prompt(),

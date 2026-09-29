@@ -21,6 +21,8 @@ DEPARTMENT_KEYWORDS = " Słowa kluczowe: {keywords}."
 
 RETRY_PROMPT = "{message}\n\nWywołaj narzędzie send_email, aby przekazać tę wiadomość do działu."
 
+WARMUP_PROMPT = "Odpowiedz jednym słowem: gotowe."
+
 FALLBACK_SUBJECT = "Wiadomość bez przypisanego działu"
 
 TOOL_SENT = "Wysłano wiadomość do {to}."
