@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "message-router"
+version = "0.1.0"
+description = "Mikroserwis-router wiadomości: agent AI (Ollama) wysyła e-mail do właściwego działu"
+authors = ["tomasz <twrutniak@gmail.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+pydantic-ai-slim = {extras = ["openai"], version = "*"}
+pydantic-settings = "*"
+email-validator = "*"
+aiosmtplib = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+httpx = "*"
+ruff = "*"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
