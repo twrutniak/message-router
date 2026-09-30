@@ -28,6 +28,7 @@ departments:
     description: >-
       Ludzie i kultura organizacji: rekrutacja i onboarding, rozwój i szkolenia,
       ścieżki kariery, benefity, ocena pracownicza, atmosfera w zespole, konflikty.
+      Nie obejmuje spraw biznesowych, takich jak marketing, sprzedaż czy finanse.
     keywords: [rekrutacja, praca, CV, szkolenie, rozwój, benefity, onboarding, awans]
     examples:
       - Jakie szkolenia i ścieżki awansu są dostępne dla programistów w naszej firmie?
@@ -53,8 +54,8 @@ departments:
 
   - address: other@example.com
     description: >-
-      Fallback: wiadomości niezrozumiałe, bez związku z pracą lub niepasujące do żadnego
-      z pozostałych działów.
+      Fallback: wiadomości niezrozumiałe, bez związku z pracą oraz sprawy niepasujące do
+      żadnego z pozostałych działów, np. marketing, sprzedaż, faktury, sprawy prywatne.
     examples:
       - asdf qwerty zxcv 12345 !!!
       - Jaka będzie jutro pogoda w Krakowie?
