@@ -6,9 +6,8 @@ from openai import AsyncOpenAI
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.models import Model
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.settings import ModelSettings
 
 from app.domain_keywords import ALLOWED_ADDRESSES, FALLBACK_ADDRESS
 from app.mailer import send_mail
@@ -43,7 +42,14 @@ def build_llm_client() -> AsyncOpenAI:
 
 
 def build_model(client: AsyncOpenAI) -> Model:
-    return OpenAIChatModel(settings.ollama_model, provider=OpenAIProvider(openai_client=client))
+    return OpenAIChatModel(
+        settings.ollama_model,
+        provider=OpenAIProvider(openai_client=client),
+        settings=OpenAIChatModelSettings(
+            temperature=settings.ollama_temperature,
+            openai_reasoning_effort=settings.ollama_reasoning_effort,
+        ),
+    )
 
 
 def build_agent(model: Model) -> Agent[RouterDeps, str]:
@@ -52,7 +58,6 @@ def build_agent(model: Model) -> Agent[RouterDeps, str]:
         deps_type=RouterDeps,
         output_type=str,
         system_prompt=build_system_prompt(),
-        model_settings=ModelSettings(temperature=settings.ollama_temperature),
     )
 
     @agent.tool

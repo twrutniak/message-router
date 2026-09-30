@@ -6,11 +6,12 @@ class Settings(BaseSettings):
 
     api_prefix: str = "/api/v1"
 
-    ollama_model: str = "qwen2.5:3b"
+    ollama_model: str = "qwen3.5:4b"
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_api_key: str = "ollama"
     ollama_timeout: float = 300.0
     ollama_temperature: float = 0.0
+    ollama_reasoning_effort: str = "none"
 
     smtp_host: str = "localhost"
     smtp_port: int = 1025

@@ -3,7 +3,7 @@ from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 
-from app.agent import build_agent, route_message
+from app.agent import build_agent, build_llm_client, build_model, route_message
 from app.domain_keywords import ALLOWED_ADDRESSES, FALLBACK_ADDRESS
 from app.prompts import FALLBACK_SUBJECT
 from app.settings import settings
@@ -139,3 +139,10 @@ async def test_test_model_calls_tool(sent_mails):
     assert response.status == "sent"
     assert response.routed_to in ALLOWED_ADDRESSES
     assert sent_mails.messages[0]["Reply-To"] == SENDER
+
+
+def test_model_settings_disable_reasoning():
+    model = build_model(build_llm_client())
+
+    assert model.settings["temperature"] == settings.ollama_temperature
+    assert model.settings["openai_reasoning_effort"] == settings.ollama_reasoning_effort

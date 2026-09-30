@@ -17,7 +17,7 @@ services:
     image: ollama/ollama
     environment:
       OLLAMA_HOST: ollama:11434
-    command: ["pull", "${OLLAMA_MODEL:-qwen2.5:3b}"]
+    command: ["pull", "${OLLAMA_MODEL:-qwen3.5:4b}"]
     depends_on:
       ollama:
         condition: service_healthy
@@ -33,7 +33,7 @@ services:
   api:
     build: .
     environment:
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:4b}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434/v1}
       SMTP_HOST: ${SMTP_HOST:-mailhog}
       SMTP_PORT: ${SMTP_PORT:-1025}
