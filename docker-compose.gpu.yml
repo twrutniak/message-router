@@ -1,7 +1,9 @@
-# Nakładka dla maszyn z GPU NVIDIA (wymaga nvidia-container-toolkit):
+# Nakładka dla maszyn z GPU NVIDIA (wymaga nvidia-container-toolkit z zarejestrowanym runtime `nvidia`):
 #   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+# `runtime: nvidia` jest potrzebne m.in. przy Dockerze ze snapa, gdzie sama rezerwacja urządzeń nie wystarcza.
 services:
   ollama:
+    runtime: nvidia
     deploy:
       resources:
         reservations:

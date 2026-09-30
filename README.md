@@ -56,11 +56,16 @@ scripts/smoke_test.sh
 
 ### GPU (NVIDIA)
 
-Wymaga sterownika NVIDIA i `nvidia-container-toolkit`:
+Wymaga sterownika NVIDIA i `nvidia-container-toolkit` z zarejestrowanym w Dockerze runtime `nvidia`
+(`docker info` powinno go pokazać w `Runtimes`; w razie braku: `sudo nvidia-ctk runtime configure --runtime=docker`
+i restart Dockera). Uruchomienie:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+docker compose exec ollama ollama ps    # kolumna PROCESSOR powinna pokazać GPU
 ```
+
+Na RTX 4090 pojedynczy request trwa ok. 1,5 s (na CPU kilkanaście–kilkadziesiąt sekund).
 
 ### Model
 
