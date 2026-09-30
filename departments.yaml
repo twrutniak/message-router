@@ -1,0 +1,60 @@
+# Konfiguracja działów, do których agent AI kieruje wiadomości.
+# Po zmianie pliku uruchom ponownie API:  docker compose restart api
+# Błąd w pliku (np. literówka w adresie) zatrzyma start API z opisem problemu w logach:
+#   docker compose logs api
+
+# Dział awaryjny: trafiają tu wiadomości niezrozumiałe lub niepasujące do żadnego działu.
+# Musi być jednym z adresów z listy "departments" poniżej.
+fallback: other@example.com
+
+departments:
+  # address     – adres e-mail działu (unikalny)
+  # description – opis zakresu spraw; na jego podstawie model wybiera dział (najważniejsze pole)
+  # keywords    – opcjonalne słowa kluczowe, pomagają modelowi w niejednoznacznych przypadkach
+  #               (słowa takie jak no, yes, on, off wpisuj w cudzysłowie, bo YAML czyta je jako true/false)
+  # examples    – opcjonalne przykładowe wiadomości; używa ich tylko scripts/smoke_test.sh
+  #               (każda powinna trafiać do tego działu), model ich nie widzi
+
+  - address: kadry@example.com
+    description: >-
+      Sprawy pracownicze i administracyjne: urlopy, zwolnienia lekarskie, umowy o pracę,
+      wynagrodzenia, premie, listy płac, świadectwa pracy, wypowiedzenia.
+    keywords: [urlop, umowa, wypłata, pensja, zwolnienie, L4, wypowiedzenie, premia]
+    examples:
+      - Chciałbym złożyć wniosek o urlop wypoczynkowy w dniach 5-16 sierpnia.
+      - Kiedy dostanę wypłatę za ten miesiąc i czy będzie w niej premia?
+
+  - address: human-resources@example.com
+    description: >-
+      Ludzie i kultura organizacji: rekrutacja i onboarding, rozwój i szkolenia,
+      ścieżki kariery, benefity, ocena pracownicza, atmosfera w zespole, konflikty.
+    keywords: [rekrutacja, praca, CV, szkolenie, rozwój, benefity, onboarding, awans]
+    examples:
+      - Jakie szkolenia i ścieżki awansu są dostępne dla programistów w naszej firmie?
+      - Polecam znajomą na stanowisko analityka, gdzie mogę przesłać jej CV?
+
+  - address: it@example.com
+    description: >-
+      Sprzęt i infrastruktura: awarie komputerów i laptopów, oprogramowanie, licencje,
+      dostępy i uprawnienia do systemów, konta, VPN, sieć, drukarki, bezpieczeństwo.
+    keywords: [komputer, laptop, nie działa, hasło, dostęp, VPN, sieć, drukarka]
+    examples:
+      - Laptop nie łączy się z VPN i nie mogę się zalogować do systemów firmowych.
+      - Drukarka na drugim piętrze nie działa, a mam pilny wydruk.
+
+  - address: help-desk@example.com
+    description: >-
+      Pierwsza linia wsparcia: ogólne pytania typu „jak coś zrobić” oraz sprawy biurowe
+      niepasujące do IT ani działów kadrowych, np. zamówienie materiałów, rezerwacja sali.
+    keywords: [jak, gdzie, pomoc, instrukcja, pytanie, biuro, rezerwacja]
+    examples:
+      - Jak mogę zarezerwować salę konferencyjną na piątkowe spotkanie zespołu?
+      - Gdzie znajdę instrukcję zamawiania materiałów biurowych?
+
+  - address: other@example.com
+    description: >-
+      Fallback: wiadomości niezrozumiałe, bez związku z pracą lub niepasujące do żadnego
+      z pozostałych działów.
+    examples:
+      - asdf qwerty zxcv 12345 !!!
+      - Jaka będzie jutro pogoda w Krakowie?

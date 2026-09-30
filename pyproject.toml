@@ -13,6 +13,7 @@ pydantic-ai-slim = {extras = ["openai"], version = "*"}
 pydantic-settings = "*"
 email-validator = "*"
 aiosmtplib = "*"
+pyyaml = "^6.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

@@ -10,11 +10,13 @@ from pydantic_ai.models.test import TestModel
 from app.agent import build_agent
 from app.api.errors import LLM_UNAVAILABLE, MAIL_UNAVAILABLE
 from app.api.routes import get_agent
+from app.domain_keywords import ALLOWED_ADDRESSES, FALLBACK_ADDRESS
 from app.main import app
 from app.settings import settings
 from tests.conftest import scripted_model, send_email_call
 
 PREFIX = settings.api_prefix
+DEPARTMENT = ALLOWED_ADDRESSES[0]
 VALID = {"email": "jan.nowak@example.com", "message": "Chciałbym zgłosić urlop na jutro"}
 
 
@@ -54,18 +56,18 @@ async def test_health(client):
 
 
 async def test_message_is_routed(client, sent_mails):
-    use_model(scripted_model([send_email_call("kadry@example.com", "Urlop", "Chcę urlop")]))
+    use_model(scripted_model([send_email_call(DEPARTMENT, "Urlop", "Chcę urlop")]))
 
     response = await client.post(f"{PREFIX}/messages", json=VALID)
 
     assert response.status_code == 200
     assert response.json() == {
         "status": "sent",
-        "routed_to": "kadry@example.com",
+        "routed_to": DEPARTMENT,
         "subject": "Urlop",
     }
     (message,) = sent_mails.messages
-    assert message["To"] == "kadry@example.com"
+    assert message["To"] == DEPARTMENT
     assert message["Reply-To"] == VALID["email"]
 
 
@@ -76,7 +78,7 @@ async def test_fallback_is_reported(client, sent_mails):
 
     assert response.status_code == 200
     assert response.json()["status"] == "fallback"
-    assert response.json()["routed_to"] == "other@example.com"
+    assert response.json()["routed_to"] == FALLBACK_ADDRESS
     assert sent_mails.messages[0]["Reply-To"] == VALID["email"]
 
 
@@ -92,7 +94,7 @@ async def test_fallback_is_reported(client, sent_mails):
     ],
 )
 async def test_invalid_payload_returns_422(client, sent_mails, payload):
-    use_model(scripted_model([send_email_call("it@example.com")]))
+    use_model(scripted_model([send_email_call(DEPARTMENT)]))
 
     response = await client.post(f"{PREFIX}/messages", json=payload)
 
@@ -118,7 +120,7 @@ async def test_smtp_unavailable_returns_502(client, monkeypatch):
         raise ConnectionRefusedError("smtp down")
 
     monkeypatch.setattr("app.mailer.aiosmtplib.send", failing_send)
-    use_model(scripted_model([send_email_call("it@example.com")]))
+    use_model(scripted_model([send_email_call(DEPARTMENT)]))
 
     response = await client.post(f"{PREFIX}/messages", json=VALID)
 

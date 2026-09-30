@@ -14,6 +14,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root
 
 COPY app ./app
+COPY departments.yaml ./departments.yaml
 
 RUN useradd --system --no-create-home app
 USER app

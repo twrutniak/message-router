@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +19,8 @@ class Settings(BaseSettings):
     smtp_port: int = 1025
     smtp_timeout: float = 10.0
     mail_from: str = "message-router@example.com"
+
+    departments_file: Path = Path(__file__).resolve().parent.parent / "departments.yaml"
 
     message_max_length: int = 2000
     agent_retries: int = 1

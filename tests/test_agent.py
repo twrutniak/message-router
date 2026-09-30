@@ -10,20 +10,19 @@ from app.settings import settings
 from tests.conftest import scripted_model, send_email_call
 
 SENDER = "jan.nowak@example.com"
+FIRST, LAST = ALLOWED_ADDRESSES[0], ALLOWED_ADDRESSES[-1]
 
 
 async def test_tool_call_sends_mail_with_reply_to(sent_mails):
-    agent = build_agent(
-        scripted_model([send_email_call("kadry@example.com", "Urlop", "Chcę urlop")])
-    )
+    agent = build_agent(scripted_model([send_email_call(FIRST, "Urlop", "Chcę urlop")]))
 
     response = await route_message(agent, SENDER, "Chcę urlop")
 
     assert response.status == "sent"
-    assert response.routed_to == "kadry@example.com"
+    assert response.routed_to == FIRST
     assert response.subject == "Urlop"
     (message,) = sent_mails.messages
-    assert message["To"] == "kadry@example.com"
+    assert message["To"] == FIRST
     assert message["Reply-To"] == SENDER
     assert message["Subject"] == "Urlop"
 
@@ -56,9 +55,9 @@ async def test_tool_schema_restricts_address_and_hides_reply_to():
 
 
 async def test_reply_to_comes_from_deps_not_model(sent_mails):
-    call = send_email_call("it@example.com")
+    call = send_email_call(FIRST)
     call.args["reply_to"] = "attacker@evil.com"
-    agent = build_agent(scripted_model([call], [send_email_call("it@example.com")]))
+    agent = build_agent(scripted_model([call], [send_email_call(FIRST)]))
 
     await route_message(agent, SENDER, "x")
 
@@ -99,24 +98,22 @@ async def test_no_tool_call_retries_then_falls_back(sent_mails):
 
 
 async def test_retry_succeeds_without_fallback(sent_mails):
-    agent = build_agent(scripted_model("nie wiem", [send_email_call("it@example.com")]))
+    agent = build_agent(scripted_model("nie wiem", [send_email_call(FIRST)]))
 
     response = await route_message(agent, SENDER, "Nie działa komputer")
 
     assert response.status == "sent"
-    assert response.routed_to == "it@example.com"
+    assert response.routed_to == FIRST
     (message,) = sent_mails.messages
-    assert message["To"] == "it@example.com"
+    assert message["To"] == FIRST
 
 
 async def test_duplicate_tool_calls_send_single_mail(sent_mails):
-    agent = build_agent(
-        scripted_model([send_email_call("it@example.com"), send_email_call("kadry@example.com")])
-    )
+    agent = build_agent(scripted_model([send_email_call(FIRST), send_email_call(LAST)]))
 
     response = await route_message(agent, SENDER, "x")
 
-    assert response.routed_to == "it@example.com"
+    assert response.routed_to == FIRST
     assert len(sent_mails) == 1
 
 
@@ -125,7 +122,7 @@ async def test_smtp_failure_propagates(monkeypatch):
         raise ConnectionRefusedError("smtp down")
 
     monkeypatch.setattr("app.mailer.aiosmtplib.send", failing_send)
-    agent = build_agent(scripted_model([send_email_call("it@example.com")]))
+    agent = build_agent(scripted_model([send_email_call(FIRST)]))
 
     with pytest.raises(ConnectionRefusedError):
         await route_message(agent, SENDER, "x")

@@ -35,9 +35,12 @@ services:
     environment:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:4b}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434/v1}
+      OLLAMA_REASONING_EFFORT: ${OLLAMA_REASONING_EFFORT:-none}
       SMTP_HOST: ${SMTP_HOST:-mailhog}
       SMTP_PORT: ${SMTP_PORT:-1025}
       MAIL_FROM: ${MAIL_FROM:-message-router@example.com}
+    volumes:
+      - ./departments.yaml:/srv/departments.yaml:ro
     ports:
       - "8000:8000"
     depends_on:

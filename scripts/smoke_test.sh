@@ -1,21 +1,15 @@
 #!/usr/bin/env bash
-# Test e2e: wysyła wiadomości do API i sprawdza w MailHogu adresata (To) oraz Reply-To.
+# Test e2e: wysyła przykładowe wiadomości (pole `examples` z departments.yaml) do API i sprawdza
+# w MailHogu adresata (To) oraz Reply-To.
 # Wymaga uruchomionego środowiska (docker compose up -d) oraz curl i python3.
 set -u
+
+cd "$(dirname "$0")/.." || exit 1
 
 API_URL="${API_URL:-http://localhost:8000}"
 MAILHOG_URL="${MAILHOG_URL:-http://localhost:8025}"
 API_PREFIX="${API_PREFIX:-/api/v1}"
 REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-300}"
-
-# nadawca|oczekiwany adresat|wiadomość
-CASES=(
-  "anna.it@example.com|it@example.com|Laptop nie łączy się z VPN i nie mogę się zalogować do systemów firmowych."
-  "jan.kadry@example.com|kadry@example.com|Chciałbym złożyć wniosek o urlop wypoczynkowy w dniach 5-16 sierpnia."
-  "ewa.hr@example.com|human-resources@example.com|Jakie szkolenia i ścieżki awansu są dostępne dla programistów w naszej firmie?"
-  "piotr.biuro@example.com|help-desk@example.com|Jak mogę zarezerwować salę konferencyjną na piątkowe spotkanie zespołu?"
-  "ola.nonsens@example.com|other@example.com|asdf qwerty zxcv 12345 !!!"
-)
 
 failures=0
 
@@ -48,10 +42,24 @@ done
 curl -sf "${API_URL}${API_PREFIX}/health" >/dev/null || { echo "API niedostępne"; exit 1; }
 curl -sf "${MAILHOG_URL}/api/v2/messages" >/dev/null || { echo "MailHog niedostępny (${MAILHOG_URL})"; exit 1; }
 
+# Przypadki testowe (adres działu + przykładowa wiadomość) pochodzą z departments.yaml,
+# czytanego przez kontener api, więc skrypt nie wymaga zmian po edycji działów.
+# Wiersze "adres<TAB>przykład"; czytane przez `docker compose exec`, żeby nie zależeć od PyYAML na hoście.
+mapfile -t CASES < <(docker compose exec -T api python -c '
+from app.domain_keywords import DEPARTMENTS
+for d in DEPARTMENTS:
+    for example in d.examples:
+        print(d.address + "\t" + example.replace("\t", " ").replace("\n", " "))
+')
+[[ ${#CASES[@]} -gt 0 ]] || { echo "Brak przykładów (pole examples) w departments.yaml"; exit 1; }
+
 curl -sf -X DELETE "${MAILHOG_URL}/api/v1/messages" >/dev/null
 
+n=0
 for entry in "${CASES[@]}"; do
-  IFS='|' read -r sender expected message <<<"${entry}"
+  n=$((n + 1))
+  IFS=$'\t' read -r expected message <<<"${entry}"
+  sender="smoke-${n}@example.com"
   echo "-> ${sender}: ${message}"
   failures_before=${failures}
 
