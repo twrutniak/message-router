@@ -170,3 +170,11 @@ uruchomić `scripts/smoke_test.sh`.
 - Działy o zbliżonym zakresie (`human-resources` i `kadry`, `help-desk` i `it`) rozróżniają wyłącznie opisy
   w `departments.yaml`.
 - Przy błędnym `departments.yaml` kontener będzie się restartował, aż plik zostanie poprawiony.
+- **Długie wiadomości.** Ponieważ to proof of concept, wiadomość jest ograniczona do 2000 znaków
+  (`message_max_length` w `app/settings.py`), a dłuższa dostaje `422` zamiast zostać po cichu przycięta. Limit
+  jest dobrany do okna kontekstu 4096 tokenów, które Ollama przyjmuje domyślnie (sam model obsługuje znacznie
+  więcej): prompt systemowy z listą działów i wiadomość mieszczą się w nim z zapasem. Przy podniesieniu limitu
+  trzeba zwiększyć `num_ctx`, bo Ollama bez ostrzeżenia odrzuca początek zbyt długiego promptu, czyli także listę
+  działów. Treść maila nie przechodzi przez model, więc obcięcie kontekstu mogłoby pogorszyć wybór działu, ale
+  nie zmieniłoby wysłanej wiadomości. W wersji produkcyjnej długie wiadomości można by streszczać albo routować
+  po początku treści.
