@@ -14,7 +14,7 @@ FIRST, LAST = ALLOWED_ADDRESSES[0], ALLOWED_ADDRESSES[-1]
 
 
 async def test_tool_call_sends_mail_with_reply_to(sent_mails):
-    agent = build_agent(scripted_model([send_email_call(FIRST, "Urlop", "Chcę urlop")]))
+    agent = build_agent(scripted_model([send_email_call(FIRST, "Urlop")]))
 
     response = await route_message(agent, SENDER, "Chcę urlop")
 
@@ -48,8 +48,9 @@ async def test_tool_schema_restricts_address_and_hides_reply_to():
     await route_message(agent, SENDER, "x")
 
     schema = captured["tools"]["send_email"]
-    assert set(schema["properties"]) == {"to", "subject", "body"}
+    assert set(schema["properties"]) == {"to", "subject"}
     assert "reply_to" not in schema["properties"]
+    assert "body" not in schema["properties"]
     to_schema = schema["properties"]["to"]
     assert set(to_schema.get("enum", [])) == set(ALLOWED_ADDRESSES)
 
@@ -62,6 +63,17 @@ async def test_reply_to_comes_from_deps_not_model(sent_mails):
     await route_message(agent, SENDER, "x")
 
     assert all(message["Reply-To"] == SENDER for message in sent_mails.messages)
+
+
+async def test_body_is_original_message_not_model_output(sent_mails):
+    original = "Chcę urlop\n\nz poważaniem, Jan"
+    call = send_email_call(FIRST, "Urlop", body="przeredagowana treść")
+    agent = build_agent(scripted_model([call]))
+
+    await route_message(agent, SENDER, original)
+
+    (message,) = sent_mails.messages
+    assert message.get_content().strip() == original
 
 
 async def test_address_outside_list_falls_back(sent_mails):

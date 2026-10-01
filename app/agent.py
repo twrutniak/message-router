@@ -29,6 +29,7 @@ Address = Literal[ALLOWED_ADDRESSES]  # type: ignore[valid-type]
 @dataclass
 class RouterDeps:
     sender_email: str
+    message: str
     routed_to: str | None = None
     subject: str | None = None
 
@@ -61,12 +62,14 @@ def build_agent(model: Model) -> Agent[RouterDeps, str]:
     )
 
     @agent.tool
-    async def send_email(ctx: RunContext[RouterDeps], to: Address, subject: str, body: str) -> str:
+    async def send_email(ctx: RunContext[RouterDeps], to: Address, subject: str) -> str:
         """Wysyła wiadomość e-mail do wybranego działu firmy."""
         if ctx.deps.routed_to:
             return TOOL_ALREADY_SENT.format(to=ctx.deps.routed_to)
         subject = " ".join(subject.split())
-        await send_mail(to=to, subject=subject, body=body, reply_to=ctx.deps.sender_email)
+        await send_mail(
+            to=to, subject=subject, body=ctx.deps.message, reply_to=ctx.deps.sender_email
+        )
         ctx.deps.routed_to = to
         ctx.deps.subject = subject
         return TOOL_SENT.format(to=to)
@@ -78,7 +81,7 @@ async def route_message(
     agent: Agent[RouterDeps, str], sender_email: str, message: str
 ) -> RouteResponse:
     """Uruchamia agenta; gdy nie wywoła toola – ponawia, a na końcu wysyła na adres awaryjny."""
-    deps = RouterDeps(sender_email=sender_email)
+    deps = RouterDeps(sender_email=sender_email, message=message)
     prompt = message
 
     for attempt in range(1 + settings.agent_retries):

@@ -28,6 +28,8 @@ jako `Exited (0)`, co jest normalne. Postęp pobierania: `docker compose logs -f
 | Swagger / OpenAPI | http://localhost:8000/api/v1/docs |
 | MailHog (przechwycone maile) | http://localhost:8025 |
 
+> Pierwszy start (pobranie modelu) i pierwszy request na CPU są wolne. `mailhog/mailhog` jest tylko na amd64 (na ARM działa przez emulację).
+
 ## Przykładowe zapytanie
 
 ```bash
@@ -51,6 +53,18 @@ Test end-to-end (wysyła przykłady z `departments.yaml` i sprawdza `To` oraz `R
 ```bash
 scripts/smoke_test.sh
 ```
+
+## Domyślne działy
+
+| Adres | Zakres |
+|---|---|
+| `kadry@example.com` | urlopy, umowy, wynagrodzenia, zwolnienia, świadectwa pracy |
+| `human-resources@example.com` | rekrutacja, szkolenia, rozwój, benefity, atmosfera w zespole |
+| `it@example.com` | sprzęt, oprogramowanie, dostępy, VPN, sieć, drukarki |
+| `help-desk@example.com` | ogólne pytania „jak coś zrobić”, sprawy biurowe |
+| `other@example.com` | fallback: niezrozumiałe lub niepasujące wiadomości |
+
+Aktualne źródło prawdy to `departments.yaml`, ta tabela jest tylko skrótem.
 
 ## Konfiguracja
 
@@ -100,7 +114,7 @@ uruchomić `scripts/smoke_test.sh`.
 
 ### Zmienne środowiskowe
 
-| Zmienna | Domyślnie | Znaczenie |
+| Zmienna | Domyślnie (compose) | Znaczenie |
 |---|---|---|
 | `OLLAMA_MODEL` | `qwen3.5:4b` | model Ollamy |
 | `OLLAMA_REASONING_EFFORT` | `none` | tryb „myślenia” modelu |
@@ -110,24 +124,28 @@ uruchomić `scripts/smoke_test.sh`.
 
 Pozostałe ustawienia (temperatura, timeouty, maksymalna długość wiadomości) są w `app/settings.py`.
 
-## Domyślne działy
+## Rozwój i testy
 
-| Adres | Zakres |
-|---|---|
-| `kadry@example.com` | urlopy, umowy, wynagrodzenia, zwolnienia, świadectwa pracy |
-| `human-resources@example.com` | rekrutacja, szkolenia, rozwój, benefity, atmosfera w zespole |
-| `it@example.com` | sprzęt, oprogramowanie, dostępy, VPN, sieć, drukarki |
-| `help-desk@example.com` | ogólne pytania „jak coś zrobić”, sprawy biurowe |
-| `other@example.com` | fallback: niezrozumiałe lub niepasujące wiadomości |
+```bash
+poetry install
+poetry run ruff check . && poetry run ruff format .
+poetry run pytest          # testy jednostkowe, bez Ollamy (model testowy PydanticAI)
+```
 
-Aktualne źródło prawdy to `departments.yaml`, ta tabela jest tylko skrótem.
+```
+app/            main.py, settings.py, domain_keywords.py (loader), agent.py, prompts.py, mailer.py, schemas.py, api/
+departments.yaml   konfiguracja działów
+tests/          testy jednostkowe
+scripts/        smoke_test.sh (e2e)
+```
 
 ## Decyzje architektoniczne
 
 - **Python, FastAPI, PydanticAI.** Całość asynchroniczna (`agent.run()`, `aiosmtplib`).
-- **Tool calling.** Agent ma jedno narzędzie `send_email(to, subject, body)`, a `to` jest ograniczone do adresów
+- **Tool calling.** Agent ma jedno narzędzie `send_email(to, subject)`, a `to` jest ograniczone do adresów
   z konfiguracji, więc model nie może wymyślić adresu.
-- **`Reply-To` ustawia kod, nie model.** Wartość pochodzi z requestu, a parametru nie ma w schemacie narzędzia.
+- **`Reply-To` i treść maila ustawia kod, nie model.** `Reply-To` i `body` pochodzą z requestu, a w schemacie narzędzia
+  są tylko `to` i `subject`, więc oryginalna wiadomość dociera do działu bez żadnych zmian.
 - **Bezpiecznik.** Gdy model nie wywoła narzędzia: jedno ponowienie, potem wysyłka do działu domyślnego z ostrzeżeniem
   w logu. Wielokrotne wywołanie narzędzia wysyła tylko jeden mail.
 - **Powtarzalność i szybkość.** `temperature=0`, wyłączone „myślenie” modelu i warm-up w `lifespan`, żeby pierwszy
@@ -149,23 +167,6 @@ uruchomić `scripts/smoke_test.sh`.
 
 ## Uwagi
 
-- Pierwszy start (pobranie modelu) i pierwszy request na CPU są wolne.
-- `mailhog/mailhog` jest tylko na amd64. Na ARM działa przez emulację.
 - Działy o zbliżonym zakresie (`human-resources` i `kadry`, `help-desk` i `it`) rozróżniają wyłącznie opisy
   w `departments.yaml`.
 - Przy błędnym `departments.yaml` kontener będzie się restartował, aż plik zostanie poprawiony.
-
-## Rozwój i testy
-
-```bash
-poetry install
-poetry run ruff check . && poetry run ruff format .
-poetry run pytest          # testy jednostkowe, bez Ollamy (model testowy PydanticAI)
-```
-
-```
-app/            main.py, settings.py, domain_keywords.py (loader), agent.py, prompts.py, mailer.py, schemas.py, api/
-departments.yaml   konfiguracja działów
-tests/          testy jednostkowe
-scripts/        smoke_test.sh (e2e)
-```

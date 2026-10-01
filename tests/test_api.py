@@ -56,7 +56,7 @@ async def test_health(client):
 
 
 async def test_message_is_routed(client, sent_mails):
-    use_model(scripted_model([send_email_call(DEPARTMENT, "Urlop", "Chcę urlop")]))
+    use_model(scripted_model([send_email_call(DEPARTMENT, "Urlop")]))
 
     response = await client.post(f"{PREFIX}/messages", json=VALID)
 

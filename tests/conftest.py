@@ -27,8 +27,8 @@ def sent_mails(monkeypatch: pytest.MonkeyPatch) -> SentMails:
     return mails
 
 
-def send_email_call(to: str, subject: str = "Temat", body: str = "Treść") -> ToolCallPart:
-    return ToolCallPart("send_email", {"to": to, "subject": subject, "body": body})
+def send_email_call(to: str, subject: str = "Temat", **extra) -> ToolCallPart:
+    return ToolCallPart("send_email", {"to": to, "subject": subject, **extra})
 
 
 def scripted_model(*runs: list[ToolCallPart] | str) -> FunctionModel:
